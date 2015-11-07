@@ -25,7 +25,7 @@ public class modelA {
     	 * p3 = proba_infect
     	 * p4 = step
     	 */
-    	model4(10, 0.6, 0.05, 100000);
+    	model4(10, 0.3, 0.8, 100000);
     }
     
     /**
@@ -182,33 +182,53 @@ public class modelA {
      */
     public static void model4(int network_size, double curable, double infectable, int step){
     	ArrayList<Computer> network = create_network(network_size);
-    	int s = step;
-    	int virus_position;
+    	int s = step-1;
+    	int computer_aimed;
     	double proba_cure;
     	int actions_within_step;
     	int total = 0;
     	
+    	ArrayList<Integer> infected_ids = new ArrayList<Integer>();
+    	
+    	//choix aleatoire d'un ordi C au sein du reseau
+		computer_aimed = randomWithRange(0, network_size-1);
+		//probabilité d'infecter C
+		if(1>(double)randomWithRange(0, 100)/100){
+			network.get(computer_aimed).setInfected(true);
+			network.get(computer_aimed).addInfectionTimes();
+		}
+    	
+		total+=count_infected(network);
+    	
     	while(s>0){
     		//Pour une étape, chaque ordi infecté, va essayer d'infecter tous les autres
     		//Ex:à une étape donnée, il y a 2 infecté sur 100, donc chaque infecté va essayer d'infecter les 98 autres [boucle 2 fois]
-    		actions_within_step = count_infected(network);
-    		while(actions_within_step>0){
-	    		for(Computer c2 : network){
-					if(infectable>(double)randomWithRange(0, 100)/100){
-						c2.setInfected(true);
-						c2.addInfectionTimes();
-		    		}
-				}
-	    		actions_within_step--;
+    		infected_ids = getAllInfectedId(network);
+    		for(Integer infected_id:infected_ids){
+				computer_aimed = randomWithRange(0, network_size-1);
+    			if(infected_id!=computer_aimed){
+    				if(infectable>(double)randomWithRange(0, 100)/100){
+    					network.get(computer_aimed).setInfected(true);
+            			network.get(computer_aimed).addInfectionTimes();
+    				}
+    				
+    			}
     		}
     		
-    		//choix aleatoire d'un ordi C au sein du reseau
-    		virus_position = randomWithRange(0, network_size-1);
-    		//probabilité d'infecter C
-    		if(infectable>(double)randomWithRange(0, 100)/100){
-    			network.get(virus_position).setInfected(true);
-    			network.get(virus_position).addInfectionTimes();
-    		}
+//    		actions_within_step = count_infected(network);
+//    		while(actions_within_step>0){
+//    			for(Computer c : network){
+//    				if(infectable>(double)randomWithRange(0, 100)/100){
+//    					c.setInfected(true);
+//            			c.addInfectionTimes();
+//    				}
+//    			}
+//    			
+//    			actions_within_step--;
+//    		}
+    		
+    		
+    		
     		s--;
     		
     		//Pour une étape, chaque ordi infecté, va essayer de se désinfecter
@@ -231,6 +251,16 @@ public class modelA {
     	
     	System.out.println("Moyenne d'ordi infecté sur "+step+"step = "+(double)total/step);
     	System.out.println(network.toString());
+    }
+    
+    public static ArrayList<Integer> getAllInfectedId(ArrayList<Computer> network){
+    	ArrayList<Integer> result = new ArrayList<Integer>();
+    	for(int i=0; i<network.size();i++){
+    		if(network.get(i).isInfected()){
+    			result.add(i);
+    		}
+    	}
+    	return result;
     }
     
     /**
